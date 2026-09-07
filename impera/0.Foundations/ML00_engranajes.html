@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La máquina de engranajes</title>
+<style>
+  :root{
+    --linen:#EDE9E0;
+    --linen-2:#E3DED2;
+    --maple-hi:#EDC894;
+    --maple:#D9AC77;
+    --maple-lo:#BC8B51;
+    --maple-edge:#8E6431;
+    --engrave:#241A10;
+    --walnut:#5A3B23;
+    --walnut-hi:#785435;
+    --steel:#9BA1A6;
+    --steel-hi:#C6CBCF;
+    --oxide:#8E3B22;
+    --ink:#2B2620;
+    --ink-soft:#6E665B;
+    --rule:#CFC8BA;
+    --font-ui:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--linen);
+    background-image:
+      repeating-linear-gradient(90deg,rgba(0,0,0,.014) 0 1px,transparent 1px 3px),
+      repeating-linear-gradient(0deg,rgba(0,0,0,.014) 0 1px,transparent 1px 3px);
+    color:var(--ink);
+    font-family:var(--font-ui);
+    -webkit-font-smoothing:antialiased;
+    padding:24px 20px 60px;
+  }
+
+  .wrap{max-width:1080px;margin:0 auto}
+
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin:0 0 6px}
+  h1{font-size:clamp(21px,3.4vw,30px);font-weight:600;margin:0;letter-spacing:.02em}
+  .sub{margin:8px 0 0;font-size:14px;color:var(--ink-soft);max-width:62ch;line-height:1.55}
+  .hr{height:1px;background:var(--rule);border:0;margin:22px 0}
+
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) 262px;gap:28px;align-items:start}
+  @media (max-width:920px){.cols{grid-template-columns:1fr}}
+
+  /* ---------- banco ---------- */
+  .banco{width:100%;display:block;user-select:none;-webkit-user-select:none}
+  .gear{cursor:pointer}
+  .gear:focus{outline:none}
+  .anillo-activo{fill:none;stroke:var(--oxide);stroke-width:2.5;pointer-events:none}
+  .gear:focus-visible .anillo-foco{opacity:1}
+  .anillo-foco{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:3 5;opacity:0;pointer-events:none}
+  .socket-label{font:600 11px var(--font-ui);letter-spacing:.16em;fill:var(--ink-soft)}
+  .letra{font:600 13.5px var(--font-ui);fill:var(--engrave)}
+  .marca{font:600 11px var(--font-ui);fill:#7A5427;letter-spacing:.04em}
+  .rotulo-activa{font:600 10px var(--font-ui);letter-spacing:.16em;fill:var(--oxide)}
+
+  /* ---------- bandeja ---------- */
+  .bandeja{margin-top:6px}
+  .lab{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin:0 0 10px}
+  .ruedas{display:flex;gap:14px;flex-wrap:wrap}
+  .chip{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    background:none;border:1px solid var(--rule);border-radius:2px;padding:8px 10px 7px;
+    cursor:pointer;transition:border-color .12s,transform .12s;font-family:var(--font-ui);
+  }
+  .chip:hover:not(:disabled){border-color:var(--maple-edge)}
+  .chip[aria-pressed="true"]{border-color:var(--oxide);border-width:2px;padding:7px 9px 6px;transform:translateY(-3px)}
+  .chip:disabled{opacity:.4;cursor:default;transform:none;border-color:var(--rule)}
+  .chip:focus-visible{outline:2px solid var(--oxide);outline-offset:2px}
+  .chip svg{display:block}
+  .chip-nom{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--ink)}
+  .chip-est{font:400 10px var(--font-mono);color:var(--ink-soft);letter-spacing:.04em}
+  .chip[aria-pressed="true"] .chip-est{color:var(--oxide)}
+  .chip.puesta .chip-est{color:var(--walnut)}
+
+  .mano{
+    display:none;align-items:center;gap:10px;margin:0 0 12px;
+    border:1px solid var(--oxide);border-left-width:3px;background:rgba(142,59,34,.05);
+    padding:8px 10px;font-size:12px;color:var(--ink);
+  }
+  .mano.on{display:flex}
+  .mano span{flex:1;line-height:1.4}
+  .mano b{font-weight:600}
+  .mano button{
+    background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 9px;cursor:pointer;
+    font:600 9.5px var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+  }
+  .mano button:hover{border-color:var(--oxide);color:var(--oxide)}
+
+  /* ---------- panel ---------- */
+  .panel{border-left:1px solid var(--rule);padding-left:22px}
+  @media (max-width:920px){.panel{border-left:0;border-top:1px solid var(--rule);padding-left:0;padding-top:22px}}
+
+  .modo{display:flex;margin-bottom:20px;border:1px solid var(--rule)}
+  .modo button{flex:1;background:none;border:0;padding:9px 4px;cursor:pointer;font:600 11px/1 var(--font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);transition:background .12s,color .12s}
+  .modo button+button{border-left:1px solid var(--rule)}
+  .modo button[aria-pressed="true"]{background:var(--ink);color:var(--linen)}
+  .modo button:focus-visible{outline:2px solid var(--oxide);outline-offset:-2px}
+
+  .lectura{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .celda{text-align:center;padding:7px 4px 8px;border:1px solid transparent;border-radius:2px}
+  .celda.activa{border-color:var(--oxide);background:rgba(142,59,34,.045)}
+  .celda .rot{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;min-height:24px;display:flex;align-items:center;justify-content:center;line-height:1.25}
+  .celda .val{font:400 33px/1.1 var(--font-mono);color:var(--engrave);border-bottom:2px solid var(--rule);padding-bottom:3px}
+  .celda.activa .val{border-bottom-color:var(--oxide)}
+  .celda .val.vacia{color:var(--rule)}
+
+  .giro{display:flex;gap:4px;margin-top:7px}
+  .giro button{flex:1;background:none;border:1px solid var(--rule);border-radius:2px;padding:5px 0;cursor:pointer;font:400 13px/1 var(--font-mono);color:var(--ink-soft);transition:.12s}
+  .giro button:hover:not(:disabled){border-color:var(--oxide);color:var(--oxide)}
+  .celda button:disabled{opacity:.28;cursor:default}
+  .celda button:focus-visible{outline:2px solid var(--oxide);outline-offset:1px}
+  .menor{margin-top:5px;width:100%;background:none;border:1px solid var(--rule);border-radius:2px;padding:4px 2px;cursor:pointer;font:600 9.5px var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);transition:.12s}
+  .menor:hover:not(:disabled){border-color:var(--oxide);color:var(--oxide)}
+
+  .estado{font-size:12px;color:var(--ink-soft);line-height:1.6;margin:16px 0 0}
+  .estado b{color:var(--ink);font-family:var(--font-mono);font-weight:400;letter-spacing:.08em}
+
+  .cinta{margin-top:20px}
+  .tira{font:400 15px/1.9 var(--font-mono);letter-spacing:.14em;color:var(--engrave);background:var(--linen-2);border:1px solid var(--rule);padding:9px 10px;min-height:62px;word-break:break-all}
+  .tira:empty::after{content:"—";color:var(--rule)}
+  .cinta-btns{display:flex;gap:8px;margin-top:8px}
+  .cinta-btns button{flex:1;background:none;border:1px solid var(--rule);border-radius:2px;padding:6px 2px;cursor:pointer;font:600 10px var(--font-ui);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);transition:.12s}
+  .cinta-btns button:hover:not(:disabled){border-color:var(--oxide);color:var(--oxide)}
+  .cinta-btns button:disabled{opacity:.3;cursor:default}
+  .cinta-btns button:focus-visible{outline:2px solid var(--oxide);outline-offset:1px}
+
+  .ayuda{margin-top:26px;font-size:12.5px;line-height:1.65;color:var(--ink-soft)}
+  .ayuda p{margin:0 0 9px}
+  .ayuda b{color:var(--ink);font-weight:600}
+  kbd{font:400 11px var(--font-mono);border:1px solid var(--rule);border-bottom-width:2px;border-radius:3px;padding:1px 5px;background:var(--linen-2);color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Caso 002 · Meme Learning Universe</p>
+  <h1>La máquina de engranajes</h1>
+  <p class="sub">Réplica de la máquina de madera. Toque una rueda para activarla y gírela
+  con <kbd>←</kbd> y <kbd>→</kbd>: un diente, una letra por pulsación.</p>
+
+  <hr class="hr">
+
+  <div class="cols">
+    <div>
+      <svg class="banco" id="banco" viewBox="0 0 640 310" role="application"
+           aria-label="Banco con tres pines para montar las ruedas"></svg>
+
+      <div class="bandeja">
+        <p class="lab">Ruedas sueltas</p>
+        <div class="mano" id="mano" aria-live="polite">
+          <span id="manoTxt"></span>
+          <button id="manoCancel">Soltar</button>
+        </div>
+        <div class="ruedas" id="bandeja"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="modo" role="group" aria-label="Modo de trabajo">
+        <button id="mMontaje" aria-pressed="true">Montaje</button>
+        <button id="mOperacion" aria-pressed="false">Operación</button>
+      </div>
+
+      <p class="lab" style="margin-bottom:8px">Letra bajo la marca</p>
+      <div class="lectura" id="lectura"></div>
+
+      <p class="estado" id="estado"></p>
+
+      <div class="cinta">
+        <p class="lab">Cinta de registro</p>
+        <div class="tira" id="tira" aria-live="polite"></div>
+        <div class="cinta-btns">
+          <button id="borrar">Borrar última</button>
+          <button id="limpiar">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="ayuda">
+        <p><b>Montaje.</b> Cada rueda gira sola. Elija una rueda suelta, toque un pin
+        para colocarla y gírela hasta que la letra de la clave quede bajo la marca roja.</p>
+        <p><b>Operación.</b> Las tres quedan engranadas: al girar una, las otras dos
+        giran con ella.</p>
+        <p><b>Giro.</b> Toque una rueda para activarla. <kbd>←</kbd> y <kbd>→</kbd>
+        la mueven un diente. Los botones del panel hacen lo mismo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   GEOMETRÍA DE LA MÁQUINA
+   Alfabeto grabado en cada rueda, leído en sentido horario.
+   ============================================================ */
+const ANILLO = {
+  5:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  6:"BACEDFHGIKJLNMOQPRTSUWVXZY",
+  7:"AZYXWVUTSRQPONMLKJIHGFEDCB"
+};
+const DIENTES=26, PASO=360/DIENTES;
+const R_TIP=100, R_ROOT=88, R_LETRA=94, R_CUBO=27, R_VENTANA=76, R_EJE=11;
+const CY=155, PINES=[{x:120,y:CY},{x:308,y:CY},{x:496,y:CY}];
+/* Marca de cada pin, en DIENTES desde las 12 en punto. Debe ser un número
+   entero: si cayera entre dos dientes la lectura sería ambigua. Las dos
+   primeras marcas van arriba; la de la rueda de salida, al costado derecho
+   (7 dientes ≈ 97°, el diente más cercano a la horizontal). */
+const MARCA_DIENTE=[0,0,7];
+const MARCA=MARCA_DIENTE.map(d=>d*PASO);
+const NOMBRES=["Izquierda","Central","Salida"];
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const S={
+  pines:[null,null,null],
+  theta:{5:0,6:0,7:0},
+  modo:"montaje",
+  mano:null,         // {rueda, origen:"bandeja"|nº de pin} rueda levantada
+  activa:null,       // pin de la rueda activa
+  cinta:[]
+};
+const norm=a=>((a%360)+360)%360;
+
+function indiceEnMarca(p){
+  const r=S.pines[p]; if(r===null) return null;
+  return Math.round(norm(MARCA[p]-S.theta[r])/PASO)%DIENTES;
+}
+function letraEnMarca(p){
+  const i=indiceEnMarca(p); return i===null?null:ANILLO[S.pines[p]][i];
+}
+
+/* ============================================================
+   DIBUJO
+   ============================================================ */
+function pathDientes(){
+  const d=[];
+  for(let i=0;i<DIENTES;i++){
+    const c=i*PASO,w=PASO*0.5,t=PASO*0.30;
+    const pt=(ang,r)=>{const a=(ang-90)*Math.PI/180;
+      return [(Math.cos(a)*r).toFixed(2),(Math.sin(a)*r).toFixed(2)];};
+    d.push(`M${pt(c-w,R_ROOT)} L${pt(c-t,R_TIP)} L${pt(c+t,R_TIP)} L${pt(c+w,R_ROOT)} Z`);
+  }
+  return d.join(" ");
+}
+const DIENTES_PATH=pathDientes();
+
+function pathVentanas(n){
+  const d=[],hueco=(360/n)*0.30;
+  for(let k=0;k<n;k++){
+    const c=k*(360/n)+(360/n)/2;
+    const a0=c-(360/n)/2+hueco/2,a1=c+(360/n)/2-hueco/2;
+    const pt=(ang,r)=>{const a=(ang-90)*Math.PI/180;
+      return `${(Math.cos(a)*r).toFixed(2)},${(Math.sin(a)*r).toFixed(2)}`;};
+    d.push(`M${pt(a0,R_CUBO)} A${R_CUBO},${R_CUBO} 0 0 1 ${pt(a1,R_CUBO)}`+
+           ` L${pt(a1,R_VENTANA)} A${R_VENTANA},${R_VENTANA} 0 0 0 ${pt(a0,R_VENTANA)} Z`);
+  }
+  return d.join(" ");
+}
+
+let uid=0;
+function svgRueda(rayos){
+  const id="g"+(uid++), anillo=ANILLO[rayos];
+  let letras="";
+  for(let i=0;i<DIENTES;i++){
+    letras+=`<g transform="rotate(${(i*PASO).toFixed(2)}) translate(0,${-R_LETRA})">`+
+            `<text class="letra" text-anchor="middle" dy="4.6">${anillo[i]}</text></g>`;
+  }
+  return `
+  <defs>
+    <radialGradient id="veta${id}" cx="38%" cy="30%" r="78%">
+      <stop offset="0%" stop-color="var(--maple-hi)"/>
+      <stop offset="62%" stop-color="var(--maple)"/>
+      <stop offset="100%" stop-color="var(--maple-lo)"/>
+    </radialGradient>
+    <linearGradient id="eje${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--steel-hi)"/>
+      <stop offset="100%" stop-color="var(--steel)"/>
+    </linearGradient>
+  </defs>
+  <path d="${DIENTES_PATH}" fill="url(#veta${id})" stroke="var(--maple-edge)" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle r="${R_ROOT}" fill="url(#veta${id})" stroke="var(--maple-edge)" stroke-width="1.1"/>
+  <path d="${pathVentanas(rayos)}" fill="var(--linen)" stroke="var(--maple-edge)" stroke-width="1.1" stroke-linejoin="round"/>
+  ${letras}
+  <text class="marca" x="34" y="4" text-anchor="middle">${rayos}0</text>
+  <circle r="${R_EJE}" fill="url(#eje${id})" stroke="#6D7378" stroke-width="1"/>`;
+}
+
+/* Triángulo que apunta hacia el centro, colocado en el ángulo de la marca */
+function flecha(p){
+  const {x,y}=PINES[p];
+  return `<g transform="translate(${x},${y}) rotate(${MARCA[p].toFixed(2)})">
+            <path d="M0,${-R_TIP+9} l-8,-16 h16 Z" fill="var(--oxide)"/>
+          </g>`;
+}
+
+const banco=document.getElementById("banco");
+
+function render(){
+  let s=`<rect x="46" y="${CY-19}" width="548" height="38" rx="6"
+           fill="var(--walnut)" stroke="var(--walnut-hi)" stroke-width="1"/>`;
+
+  PINES.forEach((pn,p)=>{
+    if(S.pines[p]!==null) return;
+    s+=`<g class="socket" data-pin="${p}" style="cursor:${S.mano?"pointer":"default"}">
+          <circle cx="${pn.x}" cy="${pn.y}" r="${R_TIP}" fill="none"
+                  stroke="${S.mano?"var(--oxide)":"var(--rule)"}"
+                  stroke-width="1.5" stroke-dasharray="5 7"/>
+          <circle cx="${pn.x}" cy="${pn.y}" r="${R_EJE}" fill="var(--steel)" stroke="#6D7378"/>
+          <text class="socket-label" x="${pn.x}" y="${pn.y+38}" text-anchor="middle">PIN ${p+1}</text>
+        </g>`;
+  });
+
+  PINES.forEach((pn,p)=>{
+    const r=S.pines[p]; if(r===null) return;
+    const act=S.activa===p;
+    s+=`<g class="gear" data-pin="${p}" tabindex="0" role="slider"
+           aria-label="Rueda de ${r} rayos, pin ${p+1}" aria-valuetext="${letraEnMarca(p)}"
+           transform="translate(${pn.x},${pn.y})">
+          <circle class="anillo-foco" r="${R_TIP+7}"/>
+          <g transform="rotate(${S.theta[r].toFixed(3)})">${svgRueda(r)}</g>
+          ${act?`<circle class="anillo-activo" r="${R_TIP+5}"/>
+                 <text class="rotulo-activa" y="${R_TIP+26}" text-anchor="middle">ACTIVA</text>`:""}
+        </g>`;
+  });
+
+  PINES.forEach((_,p)=>{ s+=flecha(p); });
+  banco.innerHTML=s;
+  pintarPanel();
+  pintarBandeja();
+}
+
+const bandeja=document.getElementById("bandeja");
+function pintarBandeja(){
+  bandeja.innerHTML=[5,6,7].map(r=>{
+    const pin=S.pines.indexOf(r);
+    const enMano=S.mano&&S.mano.rueda===r;
+    const est = enMano ? "en la mano" : (pin>=0 ? `en pin ${pin+1}` : "suelta");
+    const dis = S.modo!=="montaje";
+    return `<button class="chip ${pin>=0?"puesta":""}" data-rueda="${r}" ${dis?"disabled":""}
+      aria-pressed="${!!enMano}" aria-label="Rueda de ${r} rayos, ${est}">
+      <svg width="74" height="74" viewBox="-108 -108 216 216">${svgRueda(r)}</svg>
+      <span class="chip-nom">${r} rayos</span>
+      <span class="chip-est">${est}</span></button>`;
+  }).join("");
+
+  const m=document.getElementById("mano");
+  m.classList.toggle("on",!!S.mano&&S.modo==="montaje");
+  if(S.mano) document.getElementById("manoTxt").innerHTML=
+    `En la mano: <b>rueda de ${S.mano.rueda} rayos</b>. Toque un pin para colocarla; `+
+    `si el pin ya tiene rueda, las dos se intercambian.`;
+}
+
+function pintarPanel(){
+  document.getElementById("lectura").innerHTML=PINES.map((_,p)=>{
+    const L=letraEnMarca(p), r=S.pines[p], act=S.activa===p;
+    return `<div class="celda ${act?"activa":""}">
+      <div class="rot">${r?`${NOMBRES[p]}<br>${r} rayos`:"vacío"}</div>
+      <div class="val ${L?"":"vacia"}">${L||"·"}</div>
+      <div class="giro">
+        <button data-girar="${p}" data-dir="-1" ${r?"":"disabled"} aria-label="Girar a la izquierda">&#9664;</button>
+        <button data-girar="${p}" data-dir="1"  ${r?"":"disabled"} aria-label="Girar a la derecha">&#9654;</button>
+      </div>
+      <button class="menor" data-anotar="${p}" ${L?"":"disabled"}>Anotar</button>
+      ${r&&S.modo==="montaje"?`<div class="giro" style="margin-top:5px">
+         <button class="menor" style="margin-top:0" data-mover="${p}">Mover</button>
+         <button class="menor" style="margin-top:0" data-quitar="${p}">Quitar</button>
+       </div>`:""}
+    </div>`;
+  }).join("");
+
+  document.getElementById("estado").innerHTML=
+    `Orden de ruedas <b>${S.pines.map(r=>r||"·").join("-")}</b><br>`+
+    `Letras bajo las marcas <b>${PINES.map((_,p)=>letraEnMarca(p)||"·").join(" ")}</b><br>`+
+    `Rueda activa <b>${S.activa===null?"ninguna":NOMBRES[S.activa].toLowerCase()}</b>`;
+
+  document.getElementById("tira").textContent=
+    S.cinta.join("").replace(/(.{4})/g,"$1 ").trim();
+  document.getElementById("borrar").disabled=!S.cinta.length;
+  document.getElementById("limpiar").disabled=!S.cinta.length;
+}
+
+/* ============================================================
+   GIRO: un diente por pulsación
+   ============================================================ */
+function girar(pin,pasos){
+  if(S.pines[pin]===null) return;
+  const delta=pasos*PASO;
+  if(S.modo==="montaje"){
+    const r=S.pines[pin];
+    S.theta[r]=norm(S.theta[r]+delta);
+  }else{
+    /* engranadas: las contiguas giran en sentido contrario */
+    PINES.forEach((_,p)=>{
+      const r=S.pines[p]; if(r===null) return;
+      S.theta[r]=norm(S.theta[r]+delta*((p-pin)%2===0?1:-1));
+    });
+  }
+  render();
+  const g=banco.querySelector(`.gear[data-pin="${pin}"]`);
+  if(g&&document.activeElement!==document.body) g.focus({preventScroll:true});
+}
+
+/* ============================================================
+   INTERACCIÓN
+   ============================================================ */
+/* Coloca la rueda que está en la mano sobre el pin p.
+   Si el pin ya tiene rueda, las dos se intercambian. */
+function soltarEn(p){
+  const {rueda,origen}=S.mano;
+  const desplazada=S.pines[p];
+  S.pines[p]=rueda;
+  if(origen!=="bandeja") S.pines[origen]=desplazada;   // intercambio entre pines
+  S.mano=null; S.activa=p; render();
+}
+function levantar(p){
+  if(S.pines[p]===null) return;
+  S.mano={rueda:S.pines[p],origen:p};
+  S.pines[p]=null;
+  if(S.activa===p) S.activa=null;
+  render();
+}
+
+banco.addEventListener("click",ev=>{
+  const zona=ev.target.closest(".socket,.gear"); if(!zona) return;
+  const p=+zona.dataset.pin;
+  if(S.mano&&S.modo==="montaje"){ soltarEn(p); return; }
+  if(zona.classList.contains("gear")){
+    S.activa=p; render();
+    banco.querySelector(`.gear[data-pin="${p}"]`).focus({preventScroll:true});
+  }
+});
+
+banco.addEventListener("focusin",ev=>{
+  const g=ev.target.closest(".gear"); if(!g) return;
+  const p=+g.dataset.pin;
+  if(S.activa!==p){ S.activa=p; render();
+    banco.querySelector(`.gear[data-pin="${p}"]`).focus({preventScroll:true}); }
+});
+
+document.addEventListener("keydown",ev=>{
+  if(S.activa===null) return;
+  if(/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+  const d={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1}[ev.key];
+  if(d===undefined) return;
+  ev.preventDefault();
+  girar(S.activa,d);
+});
+
+bandeja.addEventListener("click",ev=>{
+  const b=ev.target.closest(".chip"); if(!b||b.disabled) return;
+  const r=+b.dataset.rueda;
+  if(S.mano&&S.mano.rueda===r){          // ya estaba en la mano: se suelta
+    if(S.mano.origen!=="bandeja") S.pines[S.mano.origen]=r;
+    S.mano=null; render(); return;
+  }
+  const pin=S.pines.indexOf(r);
+  if(pin>=0) levantar(pin);              // estaba montada: se retira del pin
+  else { S.mano={rueda:r,origen:"bandeja"}; render(); }
+});
+
+document.getElementById("manoCancel").onclick=()=>{
+  if(!S.mano) return;
+  if(S.mano.origen!=="bandeja") S.pines[S.mano.origen]=S.mano.rueda;
+  S.mano=null; render();
+};
+
+document.getElementById("lectura").addEventListener("click",ev=>{
+  const b=ev.target.closest("button"); if(!b||b.disabled) return;
+  if(b.dataset.girar!==undefined){ S.activa=+b.dataset.girar; girar(S.activa,+b.dataset.dir); return; }
+  if(b.dataset.anotar!==undefined){ S.cinta.push(letraEnMarca(+b.dataset.anotar)); pintarPanel(); return; }
+  if(b.dataset.mover!==undefined){ levantar(+b.dataset.mover); return; }
+  if(b.dataset.quitar!==undefined){
+    const p=+b.dataset.quitar; S.pines[p]=null;
+    if(S.activa===p) S.activa=null;
+    render();
+  }
+});
+
+document.getElementById("borrar").onclick=()=>{S.cinta.pop();pintarPanel();};
+document.getElementById("limpiar").onclick=()=>{S.cinta=[];pintarPanel();};
+
+function setModo(m){
+  if(S.mano){                                   // no dejar una rueda en el aire
+    if(S.mano.origen!=="bandeja") S.pines[S.mano.origen]=S.mano.rueda;
+    S.mano=null;
+  }
+  S.modo=m;
+  document.getElementById("mMontaje").setAttribute("aria-pressed",m==="montaje");
+  document.getElementById("mOperacion").setAttribute("aria-pressed",m==="operacion");
+  render();
+}
+document.getElementById("mMontaje").onclick=()=>setModo("montaje");
+document.getElementById("mOperacion").onclick=()=>setModo("operacion");
+
+render();
+
+/* ============================================================
+   AUTOCOMPROBACIÓN
+   Reproduce el mensaje 5 del manual original (orden 6-7-5, clave JOK).
+   ============================================================ */
+(function(){
+  const orden=[6,7,5], clave="JOK";
+  const idx=orden.map((r,j)=>ANILLO[r].indexOf(clave[j]));
+  const claro="MYBROTHEROPENEDARESTAURANTCALLEDKARMA";
+  let out="";
+  for(let n=0;n<claro.length;n++){
+    const p=ANILLO[orden[2]].indexOf(claro[n]), giro=(p-idx[2]+26)%26;
+    out+= n%2===0 ? ANILLO[orden[0]][(idx[0]+giro)%26]
+                  : ANILLO[orden[1]][((idx[1]-giro)%26+26)%26];
+  }
+  const esperado="NCAVOXGIRSQIMIEERITXBYREMXCELPDHJERQB";
+  console.log(out===esperado
+    ? "Autocomprobación: correcta. La geometría reproduce el manual original."
+    : "Autocomprobación: FALLA\n  obtenido "+out+"\n  esperado "+esperado);
+})();
+</script>
+</body>
+</html>
