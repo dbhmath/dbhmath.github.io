@@ -197,7 +197,7 @@
    titulo           -> título visible en la tarjeta
    tema             -> categoría para la vista "por doctrina"
                         ('Foundations','Regression','Classification',
-                         'Supervised Models','Unsupervised','Pipeline')
+                         'Unsupervised','Pipeline')
    formato          -> 'PDF' | 'REVEAL' | 'PPTX' | 'QUARTO'
    url              -> enlace al archivo/página (dejar '' si aún no existe)
    fechaDesbloqueo  -> 'YYYY-MM-DD' (independiente de semana; solo controla cuándo se abre la tarjeta)
@@ -233,9 +233,10 @@ const SESIONES = [
   
   // ---- EDICTO II · SEGUNDO CORTE ----
 
-   { corte:2, semana:6, titulo:'Regresión como Problema de Optimización', foto:'img/sesiones/ML15_optimiregresion.jpg', tema:'Regression', formato:'PDF', url:'impera/1.Regression/ML15_optimiregresion.pdf', fechaDesbloqueo:'2026-08-31', forzar:null },
+  { corte:2, semana:6, titulo:'Regresión como Problema de Optimización', foto:'img/sesiones/ML15_optimiregresion.jpg', tema:'Regression', formato:'PDF', url:'impera/1.Regression/ML15_optimiregresion.pdf', fechaDesbloqueo:'2026-08-31', forzar:null },
   { corte:2, semana:6, titulo:'Gradiente Descendente con Julia', foto:'img/sesiones/ML13_gd_julia.gif', tema:'Regression', formato:'REVEAL/Julia', url:'impera/1.Regression/ML13_gd_julia.html', fechaDesbloqueo:'2026-08-31', forzar:null },
   { corte:2, semana:7, titulo:'Preprocesamiento', foto:'img/sesiones/ML54_preprocesamiento.jpg', tema:'Pipeline', formato:'REVEAL/Python', url:'impera/5.Pipeline/ML54_preprocesamiento.html', fechaDesbloqueo:'2026-08-31', forzar:true },
+  { corte:2, semana:8, titulo:'Métricas en Regresión', foto:'img/sesiones/ML55_metricas.jpg', tema:'Pipeline', formato:'PDF', url:'impera/5.Pipeline/ML55_metricas.pdf', fechaDesbloqueo:'2026-08-31', forzar:null },
   { corte:2, semana:8, titulo:'Gradiente Descendente con Python', foto:'img/sesiones/ML13_gd_python.jpg', tema:'Regression', formato:'REVEAL/Python', url:'impera/1.Regression/ML13_gd_python.html', fechaDesbloqueo:'2026-09-21', forzar:null },
   { corte:2, semana:8, titulo:'Gradiente Descendente Estocástico', foto:'img/sesiones/ML14_sgd.gif', tema:'Regression', formato:'REVEAL', url:'impera/1.Regression/ML14_sgd.html', fechaDesbloqueo:'2026-09-25', forzar:null },
   { corte:2, semana:8, titulo:'Supuestos de la Regresión Lineal', foto:'img/sesiones/ML16_supuestos.jpg', tema:'Regression', formato:'', url:'impera/1.Regression/ML16_supuestos.pdf', fechaDesbloqueo:'2026-09-29', forzar:null },
@@ -250,9 +251,10 @@ const SESIONES = [
   { corte:3, semana:12, titulo:'Semana académica', foto:'img/sesiones/MLB.jpg', tema:'', formato:'', url:'', fechaDesbloqueo:'2026-10-28', forzar:null },
   { corte:3, semana:13, titulo:'Train/Test split', foto:'img/sesiones/ML51_traintestsplit.jpg', tema:'Pipeline', formato:'PDF', url:'impera/5.Pipeline/ML51_traintestsplit.pdf', fechaDesbloqueo:'2026-10-28', forzar:null },
   { corte:3, semana:13, titulo:'Bases del entrenamiento', foto:'img/sesiones/ML04_entrenamiento.jpg', tema:'Foundations', formato:'PDF', url:'impera/0.Foundations/ML04_entrenamiento.pdf', fechaDesbloqueo:'2026-10-28', forzar:null },
-  { corte:3, semana:13, titulo:'Algoritmo KNN (Vecinos Cercanos)', foto:'img/sesiones/ML31_KNN.jpg', tema:'Supervised Models', formato:'PDF', url:'impera/3.Supervised Models/ML31_KNN.pdf', fechaDesbloqueo:'2026-10-28', forzar:null },
+  { corte:3, semana:13, titulo:'Algoritmo KNN (Vecinos Cercanos)', foto:'img/sesiones/ML31_KNN.jpg', tema:'Classification', formato:'PDF', url:'impera/2.Classification/ML31_KNN.pdf', fechaDesbloqueo:'2026-10-28', forzar:null },
   { corte:3, semana:13, titulo:'Regresión Logística', foto:'img/sesiones/ML21_reg_logistica.jpg', tema:'Classification', formato:'PDF', url:'impera/2.Classification/ML21_reg_logistica.pdf', fechaDesbloqueo:'2026-10-28', forzar:null },
-
+  { corte:3, semana:14, titulo:'Matriz de Confusión', foto:'img/sesiones/ML56_matriz_confusion.jpg', tema:'Pipeline', formato:'PDF', url:'impera/5.Pipeline/ML56_matriz_confusion.pdf', fechaDesbloqueo:'2026-11-04', forzar:null },
+  { corte:3, semana:14, titulo:'Métricas en Clasificación', foto:'img/sesiones/ML57_metricas_clasificacion.jpg', tema:'Pipeline', formato:'PDF', url:'impera/5.Pipeline/ML57_metricas_clasificacion.pdf', fechaDesbloqueo:'2026-11-06', forzar:null },
 
 ];
 
@@ -511,26 +513,26 @@ function filaHTML(titulo, sub, items, mostrarTema, agruparPorSemana){
 
 const NOMBRES_CORTE = { 1:'Sectio Prima', 2:'Sectio Secunda', 3:'Sectio Tertia' };
 const TRADUCCION_CORTE = { 1:'primer corte', 2:'segundo corte', 3:'tercer corte' };
-const ORDEN_TEMAS = ['Foundations','Regression','Classification','Supervised Models','Unsupervised','Pipeline'];
 
 /* nombres de doctrina para la vista "por doctrina" — solo cambia lo visible, no las llaves internas */
+const ORDEN_TEMAS = ['Foundations','Regression','Classification','Unsupervised','Pipeline'];
+
 const DOCTRINA = {
   'Foundations':'Fundamenta',
   'Regression':'Regressio',
   'Classification':'Classificatio',
-  'Supervised Models':'Magisterium Supervisum',
   'Unsupervised':'Arcana Non Docta',
   'Pipeline':'Ordo Operis',
 };
 
 const TRADUCCION_DOCTRINA = {
-  'Foundations':'fundamentos',
+  'Foundations':'fundamentos y herramientas',
   'Regression':'regresión',
   'Classification':'clasificación',
-  'Supervised Models':'modelos supervisados',
   'Unsupervised':'no supervisado',
-  'Pipeline':'flujo de trabajo',
+  'Pipeline':'flujo de trabajo y evaluación',
 };
+
 
 function renderCortes(){
   const cortes = [...new Set(SESIONES.map(s => s.corte))].sort((a,b)=>a-b);
